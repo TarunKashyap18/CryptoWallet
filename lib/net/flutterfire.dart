@@ -7,7 +7,8 @@ import 'package:riverpod/riverpod.dart';
 abstract class BaseAuthRepsoitory {
   Stream<User?> get authStateChanges;
   Future<String> signin({required String email, required String pswd});
-  Future<String> signup({required String email, required String pswd});
+  Future<String> signup(
+      {required String username, required String email, required String pswd});
   User? getCurrentUser();
   Future<void> signout();
 }
@@ -20,7 +21,7 @@ class AuthRepository extends BaseAuthRepsoitory {
   AuthRepository(this._read);
   @override
   Stream<User?> get authStateChanges =>
-      _read(firebaseAuthProvider).authStateChanges();
+      _read(firebaseAuthProvider).userChanges();
 
   @override
   User? getCurrentUser() {
@@ -32,9 +33,10 @@ class AuthRepository extends BaseAuthRepsoitory {
     try {
       await _read(firebaseAuthProvider)
           .signInWithEmailAndPassword(email: email, password: pswd);
+
       return "Signed In";
-    } catch (e) {
-      return e.toString();
+    } on FirebaseAuthException catch (e) {
+      return e.message.toString();
     }
   }
 
@@ -44,30 +46,50 @@ class AuthRepository extends BaseAuthRepsoitory {
   }
 
   @override
-  Future<String> signup({required String email, required String pswd}) async {
+  Future<String> signup(
+      {required String username,
+      required String email,
+      required String pswd}) async {
     try {
-      await _read(firebaseAuthProvider)
+      UserCredential req = await _read(firebaseAuthProvider)
           .createUserWithEmailAndPassword(email: email, password: pswd);
+      User? user = req.user;
+      user!.updateDisplayName(username);
       return "Successfully registered";
     } on FirebaseAuthException catch (e) {
-      if (e.code == 'waek-password') {
-        return "The password is too weak";
-      } else if (e.code == 'email-already-in-use') {
-        return "The account already exists for that email";
-      }
-      return "Oops got some error";
+      return e.message.toString();
     } catch (e) {
       return e.toString();
     }
   }
 
+  Future<String> forgetPassword({required String email}) async {
+    try {
+      await _read(firebaseAuthProvider).sendPasswordResetEmail(email: email);
+      return "Password Reset mail has been sent Pls check yours mails";
+    } on FirebaseAuthException catch (e) {
+      return e.message.toString();
+    }
+  }
+
+  // Future<String> verifyEmail({required String email}) async {
+  //   try {
+  //     await _read(firebaseAuthProvider);
+  //     return "Password Reset mail has been sent Pls check yours mails";
+  //   } on FirebaseAuthException catch (e) {
+  //     return e.message.toString();
+  //   }
+  // }
+
   Future<bool> addCoin(
       {required String name,
+      required String id,
       required String amount,
       required String imageUrl,
       required String price}) async {
     try {
       String uid = FirebaseAuth.instance.currentUser!.uid;
+      String status = "Purchased";
       var value = double.parse(amount);
       var purchasePrice = double.parse(price);
       DocumentReference documentReference = FirebaseFirestore.instance
@@ -81,7 +103,9 @@ class AuthRepository extends BaseAuthRepsoitory {
         if (!snapshot.exists) {
           documentReference.set({
             'name': name,
-            'count': value,
+            'id': id,
+            'status': status,
+            'count': value / purchasePrice,
             "image_url": imageUrl,
             'purchase_price': purchasePrice,
             'date': DateTime.now().toIso8601String()
@@ -92,10 +116,12 @@ class AuthRepository extends BaseAuthRepsoitory {
             documentReference,
             {
               'name': name,
-              'count': value,
+              'id': id,
+              'status': status,
+              'count': value / purchasePrice,
               'image_url': imageUrl,
               'purchase_price': purchasePrice,
-              'date': DateTime.now().toIso8601String()
+              'date': DateTime.now().toString()
             },
             SetOptions(merge: true));
         // transaction.update(documentReference, {
