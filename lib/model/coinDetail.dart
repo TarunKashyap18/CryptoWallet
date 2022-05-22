@@ -1,5 +1,6 @@
 class Coin {
   final String coinName;
+  final String coinID;
   final String hashing_algo;
   final String description;
   final List<dynamic> homepage;
@@ -21,6 +22,7 @@ class Coin {
   final List<double> sparkline;
 
   Coin({
+    required this.coinID,
     this.coinName = "Data not available",
     this.hashing_algo = "Data not available",
     this.description = "Data not available",
@@ -44,6 +46,7 @@ class Coin {
   });
   Coin.fromJson(Map json)
       : coinName = json['name'],
+        coinID = json['id'],
         description = json['description']['en'],
         homepage = json['links']['homepage'],
         blockchainSite = json['links']['blockchain_site'],

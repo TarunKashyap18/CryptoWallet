@@ -4,12 +4,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:lottie/lottie.dart';
 
-import '../screens/login_page.dart';
+import '../screens/auth_pages/login_page.dart';
 import '../screens/particular_transaction_page.dart';
 
 import '../net/api_methods.dart';
-import '../net/flutterfire.dart';
 import '../widgets/tranding_coin_widget.dart';
 import '../widgets/coin_card.dart';
 import '../model/transcation.dart';
@@ -57,7 +57,7 @@ class _HomeState extends State<Home> {
           actions: [
             IconButton(
                 onPressed: () {
-                  signout();
+                  FirebaseAuth.instance.signOut();
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(
@@ -129,6 +129,7 @@ class _HomeState extends State<Home> {
                                                 .imageUrl,
                                             name: userPortfolioData[index]
                                                 .coinName,
+                                            id: userPortfolioData[index].coinId,
                                             units: userPortfolioData[index]
                                                 .units
                                                 .toStringAsFixed(6),
@@ -194,14 +195,15 @@ class _HomeState extends State<Home> {
                           } else {
                             return Column(
                               mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              children: const [
-                                Center(
+                              children: [
+                                Lottie.asset('assets/no_data.json'),
+                                const Center(
                                   child: Text(
                                     "Purchase some currency 🙂",
                                     style: TextStyle(fontSize: 20),
                                   ),
                                 ),
-                                ShowTrandingCoin(),
+                                const ShowTrandingCoin(),
                               ],
                             );
                           }
@@ -258,6 +260,7 @@ class _HomeState extends State<Home> {
           100;
       temp.add(UserPortfolioData(
         coinName: data[i].name,
+        coinId: data[i].id,
         imageUrl: data[i].image_url,
         exchangePrice: snapshot1.data[data[i].name],
         purchasePrice: data[i].purchase_price,
@@ -278,6 +281,7 @@ class _HomeState extends State<Home> {
   }
 
   createMapOfCoins(dynamic input) {
+    // print("from home " + input.toString());
     HashMap<String, CryptoTransactionHistory> map = HashMap();
     for (var item in input) {
       if (!map.containsKey(item.data()['name'])) {
@@ -292,18 +296,33 @@ class _HomeState extends State<Home> {
         );
         map[item.data()['name']] = temp;
       } else {
-        CryptoTransactionHistory temp = CryptoTransactionHistory(
-          date: item.data()['date'],
-          units: item.data()['count'] + map[item.data()['name']]!.units,
-          name: item.data()['name'],
-          image_url: item.data()['image_url'],
-          purchase_price: item.data()['purchase_price'] +
-              (map[item.data()['name']]!.purchase_price -
-                  item.data()['purchase_price']),
-          status: item.data()['status'],
-          id: item.data()['id'],
-        );
-        map[item.data()['name']] = temp;
+        if (item.data()['status'] == "Purchased") {
+          CryptoTransactionHistory temp = CryptoTransactionHistory(
+            date: item.data()['date'],
+            units: item.data()['count'] + map[item.data()['name']]!.units,
+            name: item.data()['name'],
+            image_url: item.data()['image_url'],
+            purchase_price: item.data()['purchase_price'] +
+                (map[item.data()['name']]!.purchase_price -
+                    item.data()['purchase_price']),
+            status: item.data()['status'],
+            id: item.data()['id'],
+          );
+          map[item.data()['name']] = temp;
+        } else {
+          CryptoTransactionHistory temp = CryptoTransactionHistory(
+            date: item.data()['date'],
+            units: item.data()['count'] - map[item.data()['name']]!.units,
+            name: item.data()['name'],
+            image_url: item.data()['image_url'],
+            purchase_price: item.data()['purchase_price'] -
+                (map[item.data()['name']]!.purchase_price -
+                    item.data()['purchase_price']),
+            status: item.data()['status'],
+            id: item.data()['id'],
+          );
+          map[item.data()['name']] = temp;
+        }
       }
     }
     List<CryptoTransactionHistory> coinsOwned = [];

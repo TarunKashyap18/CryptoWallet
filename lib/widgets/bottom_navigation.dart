@@ -1,9 +1,14 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:crypto_wallet/Screens/explore_page.dart';
 import 'package:crypto_wallet/Screens/home.dart';
-import 'package:crypto_wallet/screens/profile_page.dart';
 import 'package:crypto_wallet/theme/colors.dart';
 import 'package:custom_navigation_bar/custom_navigation_bar.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+
+import '../net/providers.dart';
+import '../screens/profile_page.dart';
 
 class MyNavigationBar extends StatefulWidget {
   const MyNavigationBar({Key? key}) : super(key: key);
@@ -18,21 +23,12 @@ class _MyNavigationBarState extends State<MyNavigationBar> {
   @override
   void initState() {
     super.initState();
-    // _pageController = PageController(initialPage: _selectedIndex);
   }
-
-  // void onPageChanged(int page) {
-  //   setState(() {
-  //     _selectedIndex = page;
-  //   });
-  // }
 
   void onTabTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
-    // _pageController.animateToPage(index,
-    //     duration: const Duration(milliseconds: 500), curve: Curves.easeInOut);
   }
 
   @override
@@ -40,22 +36,32 @@ class _MyNavigationBarState extends State<MyNavigationBar> {
     return Scaffold(
       body: IndexedStack(
         index: _selectedIndex,
-        children: const [
-          Home(),
-          ExplorePage(),
-          ProfilePage(),
+        children: [
+          const Home(),
+          const ExplorePage(),
+          const ProfilePage(),
+          Consumer(builder: (context, watch, child) {
+            FirebaseFirestore.instance
+                .collection("Users")
+                .doc(FirebaseAuth.instance.currentUser!.uid)
+                .collection('Wallet')
+                .snapshots()
+                .listen((data) {
+              double tempBalance = 0;
+              for (var item in data.docs) {
+                Map temp = item.data();
+                if (temp['transaction_type'] == "debited") {
+                  tempBalance -= temp['amount'];
+                } else {
+                  tempBalance += temp['amount'];
+                }
+                watch(walletBalanceProvider).state = tempBalance;
+              }
+            });
+            return Container();
+          }),
         ],
       ),
-      // PageView(
-      //   physics: const NeverScrollableScrollPhysics(),
-      //   onPageChanged: onPageChanged,
-      //   controller: _pageController,
-      //   children: const [
-      //     Home(),
-      //     ExplorePage(),
-      //     ProfilePage(),
-      //   ],
-      // ),
       bottomNavigationBar: CustomNavigationBar(
         iconSize: 30.0,
         selectedColor: const Color(0xff040307),

@@ -1,3 +1,4 @@
+import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
@@ -49,17 +50,37 @@ class CustomFormField extends StatelessWidget {
           ),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12.0),
-            child: TextField(
+            child: TextFormField(
               maxLines: maxLines,
               controller: controller,
               textInputAction: textInputAction,
               keyboardType: textInputType,
               obscureText: obsecureText,
+              style: const TextStyle(color: Colors.black),
               decoration: InputDecoration(
                   hintText: hintText,
                   hintStyle: KTextStyle.textFieldHintStyle,
                   border: InputBorder.none,
                   suffixIcon: suffixIcon),
+              validator: (value) {
+                if (headingText == "Email") {
+                  if (!EmailValidator.validate(value!) || value.isEmpty) {
+                    return "Email is invalid";
+                  }
+                }
+                if (headingText == "Password") {
+                  if (value!.isEmpty) {
+                    return "Password is invalid";
+                  }
+                  if (value.length < 6) {
+                    return "Password is too week";
+                  }
+                }
+                if (headingText == "UserName" && value!.isEmpty) {
+                  return "Username is empty";
+                }
+                return null;
+              },
             ),
           ),
         )

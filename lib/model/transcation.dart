@@ -24,6 +24,7 @@ class CryptoTransactionHistory {
 class UserPortfolioData {
   static UserPortfolioData? _instance;
   final String coinName;
+  final String coinId;
   final String imageUrl;
   final dynamic exchangePrice;
   final dynamic purchasePrice;
@@ -37,6 +38,7 @@ class UserPortfolioData {
 
   UserPortfolioData(
       {required this.coinName,
+      required this.coinId,
       required this.imageUrl,
       required this.purchasePrice,
       required this.exchangePrice,

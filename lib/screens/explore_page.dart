@@ -7,8 +7,8 @@ import '../net/api_methods.dart';
 import '../net/flutterfire.dart';
 import '../theme/colors.dart';
 import '../widgets/coin_item.dart';
+import 'auth_pages/login_page.dart';
 import 'coin_info_page.dart';
-import 'login_page.dart';
 
 class ExplorePage extends ConsumerWidget {
   const ExplorePage({Key? key}) : super(key: key);
@@ -113,50 +113,6 @@ class ExplorePage extends ConsumerWidget {
             ),
           ),
         );
-      },
-    );
-  }
-
-  createAlertDialoge(
-      BuildContext context, Map<String, dynamic> data, ScopedReader watch) {
-    TextEditingController _amountController = TextEditingController();
-    AlertDialog alert = AlertDialog(
-      title: Center(child: Text(data['name'])),
-      content: SizedBox(
-        height: MediaQuery.of(context).size.height / 6,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            TextFormField(
-              controller: _amountController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                label: Text("Amount"),
-                // focusedBorder: InputBorder(borderSide: BorderSide.)
-              ),
-            ),
-            MaterialButton(
-                onPressed: () {
-                  watch(authRepositoryProvider).addCoin(
-                    amount: _amountController.text.trim(),
-                    price: data['current_price'].toString(),
-                    imageUrl: data['image'],
-                    name: data['name'],
-                    id: data['id'],
-                  );
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                      content: Text(data['name'] + " Successfully Purchased")));
-                  Navigator.of(context).pop();
-                },
-                child: const Text("Buy"))
-          ],
-        ),
-      ),
-    );
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return alert;
       },
     );
   }

@@ -1,7 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.crypto_wallet">
+<uses-permission android:name="android.permission.USE_FINGERPRINT"/>
    <application
-        android:label="crypto_wallet"
+        android:label="CryptoWallet"
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"

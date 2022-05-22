@@ -2,6 +2,7 @@ import 'package:crypto_wallet/net/flutterfire.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:crypto_wallet/theme/colors.dart';
 
 // This class handles the Page to edit the Email Section of the User Profile.
 class EditEmailFormPage extends StatefulWidget {
@@ -23,82 +24,95 @@ class EditEmailFormPageState extends State<EditEmailFormPage> {
     super.dispose();
   }
 
-  void updateUserValue(String email) {}
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: <Widget>[
-                  const SizedBox(
-                      width: 320,
-                      child: Text(
-                        "What's your email?",
-                        style: TextStyle(
-                            fontSize: 25, fontWeight: FontWeight.bold),
-                        textAlign: TextAlign.left,
-                      )),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 40),
-                    child: SizedBox(
-                      height: 100,
-                      width: 320,
-                      child: TextFormField(
-                        // Handles Form Validation
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter your email.';
-                          }
-                          return null;
-                        },
-                        decoration: const InputDecoration(
-                            labelText: 'Your email address'),
-                        controller: emailController,
+    return Container(
+      decoration: const BoxDecoration(
+        borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(40), topRight: Radius.circular(40)),
+        gradient: LinearGradient(
+          colors: [appBgColorPrimary, appBgColorSecondary],
+        ),
+      ),
+      child: Scaffold(
+          backgroundColor: Colors.transparent,
+          body: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: <Widget>[
+                    const SizedBox(
+                        width: 320,
+                        child: Text(
+                          "What's your email?",
+                          style: TextStyle(
+                              fontSize: 25, fontWeight: FontWeight.bold),
+                          textAlign: TextAlign.left,
+                        )),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 40),
+                      child: SizedBox(
+                        height: 100,
+                        width: 320,
+                        child: TextFormField(
+                          keyboardType: TextInputType.emailAddress,
+                          // Handles Form Validation
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter your email.';
+                            }
+                            return null;
+                          },
+                          decoration: const InputDecoration(
+                              labelText: 'Your email address'),
+                          controller: emailController,
+                        ),
                       ),
                     ),
-                  ),
-                  Consumer(builder: (context, watch, child) {
-                    return Padding(
-                      padding: const EdgeInsets.only(top: 150),
-                      child: Align(
-                        alignment: Alignment.bottomCenter,
-                        child: SizedBox(
-                          width: 320,
-                          height: 50,
-                          child: ElevatedButton(
-                            onPressed: () {
-                              // Validate returns true if the form is valid, or false otherwise.
-                              if (_formKey.currentState!.validate() &&
-                                  EmailValidator.validate(
-                                      emailController.text)) {
-                                final user = watch(authRepositoryProvider)
-                                    .getCurrentUser();
-                                user!.updateEmail(emailController.text.trim());
-                                updateUserValue(emailController.text);
-                                Navigator.pop(context);
-                              }
-                            },
-                            child: const Text(
-                              'Update',
-                              style: TextStyle(fontSize: 15),
+                    Consumer(builder: (context, watch, child) {
+                      return Padding(
+                        padding: const EdgeInsets.only(top: 150),
+                        child: Align(
+                          alignment: Alignment.bottomCenter,
+                          child: SizedBox(
+                            width: 320,
+                            height: 50,
+                            child: ElevatedButton(
+                              onPressed: () {
+                                // Validate returns true if the form is valid, or false otherwise.
+                                if (_formKey.currentState!.validate() &&
+                                    EmailValidator.validate(
+                                        emailController.text)) {
+                                  final user = watch(authRepositoryProvider)
+                                      .getCurrentUser();
+
+                                  user!
+                                      .updateEmail(emailController.text.trim());
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                          content: Text(
+                                              "Account email updated Successfully")));
+                                  Navigator.pop(context);
+                                }
+                              },
+                              child: const Text(
+                                'Update',
+                                style: TextStyle(fontSize: 15),
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    );
-                  }),
-                ],
+                      );
+                    }),
+                  ],
+                ),
               ),
-            ),
-          ],
-        ));
+            ],
+          )),
+    );
   }
 }

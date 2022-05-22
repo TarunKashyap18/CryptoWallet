@@ -1,15 +1,18 @@
 import 'dart:async';
 
 import 'package:crypto_wallet/net/flutterfire.dart';
+import 'package:crypto_wallet/net/providers.dart';
+import 'package:crypto_wallet/screens/update_details_pages/edit_email.dart';
+import 'package:crypto_wallet/screens/update_details_pages/edit_name.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../theme/colors.dart';
 import '../widgets/display_image.dart';
-import 'login_page.dart';
-import 'update_details_pages/edit_email.dart';
-import 'update_details_pages/edit_name.dart';
+import 'auth_pages/login_page.dart';
+import 'auth_pages/reAuthenticate_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({Key? key}) : super(key: key);
@@ -20,7 +23,7 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   TextStyle txtStyle = const TextStyle(
-      fontSize: 15, fontWeight: FontWeight.w500, color: Colors.white);
+      fontSize: 15, fontWeight: FontWeight.w500, color: Colors.blueGrey);
 
   @override
   Widget build(BuildContext context) {
@@ -58,16 +61,12 @@ class _ProfilePageState extends State<ProfilePage> {
           return StreamBuilder(
               stream: watch(authRepositoryProvider).authStateChanges,
               builder: (context, snapshot) {
-                return Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Consumer(builder: (context, watch, child) {
-                      // setState(() {
-                      final user =
-                          watch(authRepositoryProvider).getCurrentUser();
-                      user!.reload();
-                      // });
-                      return Column(
+                if (snapshot.data != null) {
+                  User? user = snapshot.data as User;
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Column(
                         children: [
                           const SizedBox(
                             height: 50,
@@ -81,10 +80,11 @@ class _ProfilePageState extends State<ProfilePage> {
                                     user.photoURL ?? "assets/images/user.png",
                                 onPressed: () {},
                               )),
-                          buildUserInfoDisplay(user.displayName, 'Name',
-                              const EditNameFormPage()),
-                          buildUserInfoDisplay(
-                              user.email, 'Email', const EditEmailFormPage()),
+                          const SizedBox(height: 10),
+                          showBalance(watch),
+                          const SizedBox(height: 10),
+                          buildUserInfoDisplay(user.displayName, 'Name'),
+                          buildUserInfoDisplay(user.email, 'Email'),
                           Padding(
                             padding: const EdgeInsets.all(10),
                             child: Container(
@@ -104,7 +104,9 @@ class _ProfilePageState extends State<ProfilePage> {
                                     alignment: Alignment.centerLeft,
                                     child: Text(
                                       "Email varified : ",
-                                      style: txtStyle,
+                                      style: txtStyle.copyWith(
+                                        color: Colors.white,
+                                      ),
                                     ),
                                   ),
                                   user.emailVerified
@@ -129,47 +131,81 @@ class _ProfilePageState extends State<ProfilePage> {
                               ),
                             ),
                           ),
-                          MaterialButton(
-                            child: Text(
-                              "Delete Account",
-                              style: txtStyle,
+                          Card(
+                            color: glassColor,
+                            child: MaterialButton(
+                              child: Center(
+                                child: Text(
+                                  "Delete Account",
+                                  style: txtStyle,
+                                ),
+                              ),
+                              onPressed: (() {
+                                Navigator.push(context,
+                                    MaterialPageRoute(builder: (context) {
+                                  return const ReAuthenticationPage();
+                                })).then((something) {
+                                  final deleteResult =
+                                      watch(authRepositoryProvider)
+                                          .deleteAccountDetails();
+                                  print(deleteResult);
+                                  user.delete();
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                          content: Text(
+                                              "Account deleted Successfully")));
+                                  Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) =>
+                                              const LoginPage()));
+                                });
+                              }),
                             ),
-                            onPressed: (() {
-                              user.delete();
-                              Navigator.of(context).pushReplacement(
-                                  MaterialPageRoute(
-                                      builder: (context) => const LoginPage()));
-                            }),
                           ),
                         ],
-                      );
-                    })
-                  ],
-                );
+                      )
+                    ],
+                  );
+                } else {
+                  return Container();
+                }
               });
         }),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () {
-            setState(() {});
-          },
-          child: const Icon(Icons.refresh_rounded),
-        ),
-        floatingActionButtonLocation: FloatingActionButtonLocation.miniEndFloat,
       ),
     );
   }
 
+  Widget showBalance(ScopedReader watch) {
+    const wallletTextStyle = TextStyle(
+      fontSize: 20,
+    );
+    double balance = 0;
+    return Row(
+      children: [
+        const Text(
+          "Wallet Balance : ",
+          style: wallletTextStyle,
+        ),
+        Text(
+          watch(walletBalanceProvider).state.toStringAsFixed(2) + " ₹",
+          style: wallletTextStyle,
+        ),
+      ],
+    );
+  }
+
   // Widget builds the display item with the proper formatting to display the user's info
-  Widget buildUserInfoDisplay(
-          String? getValue, String title, Widget editPage) =>
-      Padding(
+  Widget buildUserInfoDisplay(String? getValue, String title) => Padding(
         padding: const EdgeInsets.only(bottom: 10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               title,
-              style: txtStyle,
+              style: txtStyle.copyWith(
+                color: Colors.white,
+              ),
             ),
             const SizedBox(
               height: 1,
@@ -185,7 +221,11 @@ class _ProfilePageState extends State<ProfilePage> {
                 ))),
                 child: InkWell(
                   onTap: () {
-                    navigateSecondPage(editPage);
+                    if (title == "Email") {
+                      reauthenticate(const EditEmailFormPage());
+                    } else {
+                      navigateSecondPage(const EditNameFormPage());
+                    }
                   },
                   child: Row(children: [
                     Expanded(
@@ -224,5 +264,16 @@ class _ProfilePageState extends State<ProfilePage> {
   // Refrshes the Page after updating user info.
   FutureOr onGoBack(dynamic value) {
     setState(() {});
+  }
+
+  void reauthenticate(Widget editForm) {
+    Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => const ReAuthenticationPage()))
+        .then((somthing) {
+      Navigator.push(context, MaterialPageRoute(builder: (context) => editForm))
+          .then(onGoBack);
+    });
   }
 }

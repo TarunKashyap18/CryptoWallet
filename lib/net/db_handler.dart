@@ -6,19 +6,25 @@
 // import 'dart:collection';
 
 // class DbHandler {
-//   static var _dataStream;
+//   static late Stream<QuerySnapshot> _dataStream;
+//   static var Dbdata;
 //   static List<UserPortfolioData> userPortfolioData = [];
 //   static List<CryptoTransactionHistory> listOfCoinTransaction = [];
 //   static HashMap<String, double> coinPriceDataMap = HashMap();
 //   static dynamic resultData = [];
-//   static initDbHandler() async {
+//   initDbHandler() async {
 //     print("initDb Started");
-//     _dataStream = await FirebaseFirestore.instance
+//     print("initDb uid: " + FirebaseAuth.instance.currentUser!.uid);
+
+//     _dataStream = (FirebaseFirestore.instance
 //         .collection('Users')
 //         .doc(FirebaseAuth.instance.currentUser!.uid)
 //         .collection('Transaction')
-//         .snapshots()
-//         .toList();
+//         .snapshots());
+//     _dataStream.forEach((element) {
+//       print(element.docs.length);
+//     });
+//     print(_dataStream);
 //     listOfCoinTransaction = createMapOfCoins(_dataStream);
 //     coinPriceDataMap = setPrice(listOfCoinTransaction);
 //     resultData = setPortfolioData(listOfCoinTransaction, coinPriceDataMap);
@@ -27,9 +33,6 @@
 
 //   static createMapOfCoins(dynamic input) {
 //     HashMap<String, CryptoTransactionHistory> map = HashMap();
-//     for (var item in input) {
-//       print(item.data()['name'] + "\n");
-//     }
 //     for (var item in input) {
 //       if (!map.containsKey(item.listOfCoinTransaction()['name'])) {
 //         CryptoTransactionHistory temp = CryptoTransactionHistory(

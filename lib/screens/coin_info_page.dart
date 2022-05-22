@@ -1,5 +1,8 @@
+import 'package:crypto_wallet/widgets/buy_alertDailoge.dart';
 import 'package:crypto_wallet/widgets/info_show_hide.dart';
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../model/coinDetail.dart';
 import '../net/api_methods.dart';
@@ -19,7 +22,6 @@ class _CoinInfoPageState extends State<CoinInfoPage> {
   var _data;
   @override
   void initState() {
-    // TODO: implement initState
     _data = ApiRepository().getCoinDetails(widget.coinId);
     super.initState();
   }
@@ -53,6 +55,21 @@ class _CoinInfoPageState extends State<CoinInfoPage> {
                 Coin coindetails = Coin.fromJson(data);
                 return Column(
                   children: [
+                    Consumer(builder: (context, watch, child) {
+                      return Card(
+                        child: MaterialButton(
+                            child: const ListTile(
+                              leading: Text("Purchase"),
+                              trailing: FaIcon(
+                                FontAwesomeIcons.cartPlus,
+                              ),
+                            ),
+                            onPressed: () {
+                              BuyMenu.createAlertDialoge(
+                                  context, coindetails, watch);
+                            }),
+                      );
+                    }),
                     InfoShowOrHide(
                       title: "Coin Name",
                       data: coindetails.coinName,

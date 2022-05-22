@@ -13,16 +13,17 @@ class DisplayImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const color = Color.fromRGBO(64, 105, 225, 1);
+    const color = Color.fromARGB(255, 148, 148, 230);
 
     return Center(
         child: Stack(children: [
       buildImage(color),
-      Positioned(
-        child: buildEditIcon(color),
-        right: 4,
-        top: 10,
-      )
+      // edit image
+      // Positioned(
+      //   child: buildEditIcon(color),
+      //   right: 4,
+      //   top: 10,
+      // )
     ]));
   }
 

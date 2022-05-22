@@ -66,6 +66,7 @@ class ParticularTranscationPage extends StatelessWidget {
                         "/" +
                         tempDate.year.toString(),
                   ),
+                  trailing: Text(transactions[index].status),
                 ),
               );
             }),
